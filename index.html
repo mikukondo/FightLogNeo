@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FightLogNeo">
+  <meta name="theme-color" content="#0d0d0d">
+  <title>FightLogNeo</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header id="app-header">
+    <div class="header-left" id="header-left"></div>
+    <h1 class="app-title">FIGHT LOG NEO</h1>
+    <div class="header-right" id="header-right"></div>
+  </header>
+
+  <main id="app-main">
+
+    <!-- ===== VIEW: RECORD ===== -->
+    <div id="view-record" class="view active">
+      <div class="session-bar" id="session-bar">
+        <div class="session-bar-info">
+          <span class="session-bar-date" id="session-date"></span>
+          <span class="session-bar-title" id="session-title-display"></span>
+        </div>
+        <button class="session-edit-btn" id="session-edit-btn">編集</button>
+      </div>
+
+      <div class="char-selection">
+        <div class="char-slot" id="my-char-slot" onclick="openCharPicker('my')">
+          <div class="char-label">自分</div>
+          <div class="char-name" id="my-char-name">タップして選択</div>
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="char-slot" id="opp-char-slot" onclick="openCharPicker('opp')">
+          <div class="char-label">相手</div>
+          <div class="char-name" id="opp-char-name">タップして選択</div>
+        </div>
+      </div>
+
+      <div class="battle-buttons">
+        <button class="btn-win" id="btn-win" onclick="recordMatch('win')" disabled>
+          <span class="btn-icon">▲</span>
+          <span class="btn-text">WIN</span>
+        </button>
+        <button class="btn-lose" id="btn-lose" onclick="recordMatch('lose')" disabled>
+          <span class="btn-icon">▼</span>
+          <span class="btn-text">LOSE</span>
+        </button>
+      </div>
+
+      <div id="today-stats" class="stats-card"></div>
+      <div id="recent-matches"></div>
+    </div>
+
+    <!-- ===== VIEW: HISTORY ===== -->
+    <div id="view-history" class="view">
+      <div id="history-list"></div>
+    </div>
+
+    <!-- ===== VIEW: STATS ===== -->
+    <div id="view-stats" class="view">
+      <div class="period-tabs">
+        <button class="period-tab active" data-period="today"  onclick="selectPeriod('today')">今日</button>
+        <button class="period-tab"        data-period="week"   onclick="selectPeriod('week')">週間</button>
+        <button class="period-tab"        data-period="month"  onclick="selectPeriod('month')">月間</button>
+        <button class="period-tab"        data-period="all"    onclick="selectPeriod('all')">全期間</button>
+        <button class="period-tab"        data-period="custom" onclick="selectPeriod('custom')">選択</button>
+      </div>
+      <div id="custom-session-picker" class="custom-picker hidden"></div>
+      <div id="stats-content"></div>
+    </div>
+
+    <!-- ===== VIEW: SETTINGS ===== -->
+    <div id="view-settings" class="view">
+      <div class="settings-section">
+        <div class="settings-section-title">キャラクター管理</div>
+        <button class="btn-add-char" onclick="showAddCharModal()">＋ キャラクターを追加</button>
+        <div id="char-list"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">データ管理</div>
+        <button class="btn-outline-danger" onclick="showConfirmDialog('全データを削除しますか？\nこの操作は取り消せません。', '削除する', deleteAllData)">全データを削除</button>
+      </div>
+    </div>
+
+  </main>
+
+  <nav id="bottom-nav">
+    <button class="nav-item active" data-view="record"   onclick="switchView('record')">
+      <span class="nav-icon">⚔</span><span class="nav-label">記録</span>
+    </button>
+    <button class="nav-item" data-view="history"  onclick="switchView('history')">
+      <span class="nav-icon">📋</span><span class="nav-label">戦歴</span>
+    </button>
+    <button class="nav-item" data-view="stats"    onclick="switchView('stats')">
+      <span class="nav-icon">📊</span><span class="nav-label">統計</span>
+    </button>
+    <button class="nav-item" data-view="settings" onclick="switchView('settings')">
+      <span class="nav-icon">⚙</span><span class="nav-label">設定</span>
+    </button>
+  </nav>
+
+  <!-- Result flash overlay -->
+  <div id="result-flash" class="result-flash"></div>
+
+  <!-- ===== MODAL: CHARACTER PICKER ===== -->
+  <div id="modal-char-picker" class="modal-overlay" onclick="closeModal('char-picker')">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="char-picker-title">キャラクター選択</h3>
+        <button class="modal-close" onclick="closeModal('char-picker')">✕</button>
+      </div>
+      <div id="char-picker-grid" class="char-picker-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: SESSION DETAIL ===== -->
+  <div id="modal-session-detail" class="modal-overlay" onclick="closeModal('session-detail')">
+    <div class="modal-sheet modal-full" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>セッション詳細</h3>
+        <button class="modal-close" onclick="closeModal('session-detail')">✕</button>
+      </div>
+      <div id="session-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: RECORD EDIT ===== -->
+  <div id="modal-record-edit" class="modal-overlay" onclick="closeModal('record-edit')">
+    <div class="modal-sheet modal-small" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>セッション編集</h3>
+        <button class="modal-close" onclick="closeModal('record-edit')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="input-label">タイトル</label>
+        <input type="text" id="record-edit-title" class="input-text" maxlength="30" placeholder="例: ランクマッチ">
+        <label class="input-label">メモ</label>
+        <textarea id="record-edit-memo" class="input-textarea" rows="3" placeholder="今日の気づきなど..."></textarea>
+        <button class="btn-primary" onclick="saveRecordEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: ADD CHARACTER ===== -->
+  <div id="modal-add-char" class="modal-overlay" onclick="closeModal('add-char')">
+    <div class="modal-sheet modal-tiny" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>キャラクターを追加</h3>
+        <button class="modal-close" onclick="closeModal('add-char')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="input-label">キャラクター名</label>
+        <input type="text" id="new-char-input" class="input-text" maxlength="20" placeholder="名前を入力">
+        <button class="btn-primary" onclick="addCustomChar()">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CONFIRM ===== -->
+  <div id="modal-confirm" class="modal-overlay">
+    <div class="modal-sheet modal-tiny" onclick="event.stopPropagation()">
+      <div class="modal-body">
+        <p id="confirm-message" class="confirm-message"></p>
+        <div class="confirm-buttons">
+          <button class="btn-secondary" onclick="resolveConfirm(false)">キャンセル</button>
+          <button class="btn-danger-confirm" id="confirm-ok-btn" onclick="resolveConfirm(true)">削除する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
