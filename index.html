@@ -80,6 +80,15 @@
     <!-- ===== VIEW: SETTINGS ===== -->
     <div id="view-settings" class="view">
       <div class="settings-section">
+        <div class="settings-section-title">メインキャラクター</div>
+        <div class="main-char-row" id="main-char-slot" onclick="openCharPicker('main')">
+          <span class="main-char-row-label">メインキャラ</span>
+          <span class="main-char-row-value empty" id="main-char-name">未設定</span>
+          <span class="main-char-row-arrow">›</span>
+        </div>
+        <button class="btn-clear-main" id="main-char-clear-btn" onclick="clearMainChar()" style="display:none">クリア</button>
+      </div>
+      <div class="settings-section">
         <div class="settings-section-title">キャラクター管理</div>
         <button class="btn-add-char" onclick="showAddCharModal()">＋ キャラクターを追加</button>
         <div id="char-list"></div>

@@ -15,6 +15,7 @@ const KEYS = {
   MATCHES:     'fln_matches',
   CHARACTERS:  'fln_characters',
   LAST_CHARS:  'fln_last_chars',
+  MAIN_CHAR:   'fln_main_char',
 };
 
 // ─── APP STATE ───────────────────────────────────
@@ -99,6 +100,12 @@ const DB = {
 
   lastChars() { try { return JSON.parse(localStorage.getItem(KEYS.LAST_CHARS) || '{}'); } catch { return {}; } },
   saveLastChars(v) { localStorage.setItem(KEYS.LAST_CHARS, JSON.stringify(v)); },
+
+  mainChar() { return localStorage.getItem(KEYS.MAIN_CHAR) || null; },
+  saveMainChar(v) {
+    if (v) localStorage.setItem(KEYS.MAIN_CHAR, v);
+    else   localStorage.removeItem(KEYS.MAIN_CHAR);
+  },
 };
 
 // ─── SESSION MANAGER ─────────────────────────────
@@ -195,7 +202,11 @@ function switchView(name) {
   document.getElementById(`view-${name}`).classList.add('active');
   document.querySelector(`.nav-item[data-view="${name}"]`).classList.add('active');
 
-  if (name === 'record')   renderRecord();
+  if (name === 'record') {
+    const main = DB.mainChar();
+    if (main) State.myChar = main;
+    renderRecord();
+  }
   if (name === 'history')  renderHistory();
   if (name === 'stats')    renderStats();
   if (name === 'settings') renderSettings();
@@ -376,13 +387,17 @@ function saveRecordEdit() {
 function openCharPicker(target) {
   State.charPickerTarget = target;
   document.getElementById('char-picker-title').textContent =
-    target === 'my' ? '自分のキャラクター' : '相手のキャラクター';
+    target === 'my'   ? '自分のキャラクター' :
+    target === 'main' ? 'メインキャラクター' :
+                        '相手のキャラクター';
 
   const chars = DB.characters().sort((a, b) => {
     if (a.isPreset !== b.isPreset) return a.isPreset ? -1 : 1;
     return a.name.localeCompare(b.name, 'ja');
   });
-  const selected = target === 'my' ? State.myChar : State.oppChar;
+  const selected = target === 'my'   ? State.myChar :
+                   target === 'main' ? DB.mainChar() :
+                                       State.oppChar;
 
   document.getElementById('char-picker-grid').innerHTML =
     chars.map(c => `
@@ -394,11 +409,24 @@ function openCharPicker(target) {
 }
 
 function pickChar(name) {
+  if (State.charPickerTarget === 'main') {
+    DB.saveMainChar(name);
+    closeModal('char-picker');
+    renderSettings();
+    showToast(`${name} をメインキャラに設定しました`);
+    return;
+  }
   if (State.charPickerTarget === 'my') State.myChar  = name;
   else                                  State.oppChar = name;
   DB.saveLastChars({ myChar: State.myChar, oppChar: State.oppChar });
   closeModal('char-picker');
   renderRecord();
+}
+
+function clearMainChar() {
+  DB.saveMainChar(null);
+  renderSettings();
+  showToast('メインキャラをクリアしました');
 }
 
 // ─── HISTORY VIEW ────────────────────────────────
@@ -569,6 +597,13 @@ function toggleCustomSession(id, checked) {
 
 // ─── SETTINGS VIEW ───────────────────────────────
 function renderSettings() {
+  const main = DB.mainChar();
+  const nameEl = document.getElementById('main-char-name');
+  const clearBtn = document.getElementById('main-char-clear-btn');
+  nameEl.textContent = main || '未設定';
+  nameEl.classList.toggle('empty', !main);
+  clearBtn.style.display = main ? '' : 'none';
+
   const chars = DB.characters().sort((a, b) => {
     if (a.isPreset !== b.isPreset) return a.isPreset ? -1 : 1;
     return a.name.localeCompare(b.name, 'ja');
@@ -638,10 +673,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') document.getElementById('record-edit-memo').focus();
   });
 
-  // Restore last selected characters
+  // Restore characters: main char takes priority for myChar
   const last = DB.lastChars();
-  if (last.myChar)  State.myChar  = last.myChar;
-  if (last.oppChar) State.oppChar = last.oppChar;
+  const main = DB.mainChar();
+  State.myChar  = main || last.myChar  || null;
+  State.oppChar = last.oppChar || null;
 
   // Initial render
   renderRecord();
