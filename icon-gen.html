@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Icon Generator</title></head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<br><button onclick="download()">ダウンロード</button>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const S = 512, R = 80;
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y,     x + w, y + r,     r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x,     y + h, x,     y + h - r, r);
+  ctx.lineTo(x,     y + r);
+  ctx.arcTo(x,     y,     x + r, y,         r);
+  ctx.closePath();
+}
+
+// Background
+roundRect(0, 0, S, S, R);
+ctx.fillStyle = '#0d0d0d';
+ctx.fill();
+
+// Border
+roundRect(6, 6, S-12, S-12, R-4);
+ctx.strokeStyle = '#cc0000';
+ctx.lineWidth = 10;
+ctx.stroke();
+
+// "FL"
+ctx.fillStyle = '#cc0000';
+ctx.font = '900 230px "Arial Black", Arial, sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'alphabetic';
+ctx.fillText('FL', 256, 280);
+
+// Line
+ctx.fillStyle = '#cc0000';
+ctx.fillRect(70, 310, 372, 5);
+
+// "NEO"
+ctx.fillStyle = '#ffffff';
+ctx.font = '900 88px "Arial Black", Arial, sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'alphabetic';
+ctx.fillText('NEO', 256, 420);
+
+function download() {
+  const a = document.createElement('a');
+  a.download = 'apple-touch-icon.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
